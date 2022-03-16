@@ -1565,6 +1565,13 @@ export interface SubnetProps {
    * @default true in Subnet.Public, false in Subnet.Private or Subnet.Isolated.
    */
   readonly mapPublicIpOnLaunch?: boolean;
+
+  /**
+   * The route table that will be associated with the subnet
+   *
+   * @default - undefined - a new RouteTable will be created
+   */
+  readonly routeTable?: IRouteTable;
 }
 
 /**
@@ -1674,15 +1681,19 @@ export class Subnet extends Resource implements ISubnet {
     this.subnetNetworkAclAssociationId = Lazy.string({ produce: () => this._networkAcl.networkAclId });
     this.node.defaultChild = subnet;
 
-    const table = new CfnRouteTable(this, 'RouteTable', {
-      vpcId: props.vpcId,
-    });
-    this.routeTable = { routeTableId: table.ref };
+    if ( props.routeTable === undefined ) {
+      const table = new CfnRouteTable(this, 'RouteTable', {
+        vpcId: props.vpcId,
+      });
+      this.routeTable = { routeTableId: table.ref };
+    } else {
+      this.routeTable = props.routeTable;
+    }
 
     // Associate the public route table for this subnet, to this subnet
     new CfnSubnetRouteTableAssociation(this, 'RouteTableAssociation', {
       subnetId: this.subnetId,
-      routeTableId: table.ref,
+      routeTableId: this.routeTable.routeTableId,
     });
 
     this.internetConnectivityEstablished = this._internetConnectivityEstablished;

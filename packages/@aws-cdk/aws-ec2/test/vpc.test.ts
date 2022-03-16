@@ -1376,6 +1376,52 @@ describe('vpc', () => {
     });
   });
 
+  describe('subnet', () => {
+    test('create subnet', () => {
+      const stack = getTestStack();
+      new Subnet(stack, 'Subnet', {
+        vpcId: 'vpc-1',
+        availabilityZone: 'az1',
+        cidrBlock: '1.1.1.1/32',
+      });
+      Template.fromStack(stack).hasResourceProperties('AWS::EC2::Subnet', {
+        VpcId: 'vpc-1',
+        CidrBlock: '1.1.1.1/32',
+        AvailabilityZone: 'az1',
+      });
+      Template.fromStack(stack).hasResourceProperties('AWS::EC2::SubnetRouteTableAssociation', {
+        RouteTableId: {
+          Ref: 'SubnetRouteTableB722C9E4',
+        },
+        SubnetId: {
+          Ref: 'Subnet53F41B8F',
+        },
+      });
+    });
+    test('create subnet with routetable specified', () => {
+      const stack = getTestStack();
+      new Subnet(stack, 'Subnet', {
+        vpcId: 'vpc-1',
+        availabilityZone: 'az1',
+        cidrBlock: '1.1.1.1/32',
+        routeTable: {
+          routeTableId: 'rt-12345',
+        },
+      });
+      Template.fromStack(stack).hasResourceProperties('AWS::EC2::Subnet', {
+        VpcId: 'vpc-1',
+        CidrBlock: '1.1.1.1/32',
+        AvailabilityZone: 'az1',
+      });
+      Template.fromStack(stack).resourceCountIs('AWS::EC2::RouteTable', 0);
+      Template.fromStack(stack).hasResourceProperties('AWS::EC2::SubnetRouteTableAssociation', {
+        RouteTableId: 'rt-12345',
+        SubnetId: {
+          Ref: 'Subnet53F41B8F',
+        },
+      });
+    });
+  });
   describe('subnet selection', () => {
     test('selecting default subnets returns the private ones', () => {
       // GIVEN

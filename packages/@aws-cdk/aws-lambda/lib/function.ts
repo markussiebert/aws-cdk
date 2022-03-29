@@ -585,7 +585,7 @@ export class Function extends FunctionBase {
   /**
    * Execution role associated with this function
    */
-  public readonly role?: iam.IRole;
+  public readonly role: iam.IRole;
 
   /**
    * The runtime configured for this lambda.
